@@ -1,0 +1,75 @@
+{
+  "variables": {
+    "aws_access_key": "",
+    "aws_secret_key": ""
+  },
+  "builders": [
+    {
+      "type": "amazon-ebs",
+      "access_key": "{{user `aws_access_key`}}",
+      "secret_key": "{{user `aws_secret_key`}}",
+      "region": "us-west-2",
+      "source_ami": "ami-71b7fe41",
+      "instance_type": "t1.micro",
+      "ssh_username": "ubuntu",
+      "ami_name": "packer-example {{timestamp}}"
+    },
+    {
+      "type": "virtualbox-iso",
+      "guest_os_type": "Ubuntu_64",
+      "iso_url": "http://releases.ubuntu.com/12.04/ubuntu-12.04.4-server-amd64.iso",
+      "iso_checksum": "e83adb9af4ec0a039e6a5c6e145a34de",
+      "iso_checksum_type":"md5",
+      "http_directory": "preseed",
+      "ssh_username": "vagrant",
+      "ssh_password": "vagrant",
+      "boot_wait":"5s",
+      "output_directory": "ubuntu64_basebox_virtualbox",
+      "shutdown_command": "echo 'shutdown -P now' > shutdown.sh; echo 'vagrant'|sudo -S sh 'shutdown.sh'",
+      "boot_wait": "4s",
+      "boot_command": [
+        "<esc><esc><enter><wait>",
+        "/install/vmlinuz noapic preseed/url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/preseed.cfg <wait>",
+        "debian-installer=en_US auto locale=en_US kbd-chooser/method=us <wait>",
+        "hostname={{ .Name }} <wait>",
+        "fb=false debconf/frontend=noninteractive <wait>",
+        "keyboard-configuration/modelcode=SKIP keyboard-configuration/layout=USA keyboard-configuration/variant=USA console-setup/ask_detect=false <wait>",
+        "initrd=/install/initrd.gz -- <enter><wait>"
+      ]
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "execute_command": "echo 'vagrant' | {{ .Vars }} sudo -E -S sh '{{ .Path }}'",
+      "inline": [
+        "sleep 10",
+        "sudo apt-get update -y",
+        "sudo apt-get upgrade -y",
+        "sudo apt-get install -y linux-headers-$(uname -r) build-essential dkms",
+        "sudo apt-get clean",
+        "sudo apt-get dist-upgrade",
+        "mount -o loop VBoxGuestAdditions.iso /media/cdrom",
+        "sh /media/cdrom/VBoxLinuxAdditions.run",
+        "umount /media/cdrom",
+        "mkdir ~/.ssh",
+        "wget -qO- https://raw.github.com/mitchellh/vagrant/master/keys/vagrant.pub >> ~/.ssh/authorized_keys",
+        "echo 'vagrant ALL=NOPASSWD:ALL' > /tmp/vagrant",
+        "chmod 0440 /tmp/vagrant",
+        "mv /tmp/vagrant /etc/sudoers.d/",
+
+        "sudo apt-get install software-properties-common",
+        "sudo apt-add-repository ppa:ansible/ansible",
+        "sudo apt-get -y install ansible"
+      ]
+    },
+    {
+      "type": "ansible-local",
+      "playbook_dir": "ansible",
+      "playbook_file": "ansible/packer.yml"
+    }
+  ],
+  "post-processors": [
+    "vagrant"
+  ]
+}

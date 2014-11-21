@@ -1,0 +1,5 @@
+---
+- name: Packer base
+  hosts: all
+  roles:
+    - common
