@@ -9,10 +9,19 @@
       "access_key": "{{user `aws_access_key`}}",
       "secret_key": "{{user `aws_secret_key`}}",
       "region": "us-west-2",
-      "source_ami": "ami-71b7fe41",
+      "source_ami": "ami-1d47052d",
       "instance_type": "t1.micro",
       "ssh_username": "ubuntu",
-      "ami_name": "packer-example {{timestamp}}"
+      "ami_name": "packer-ubuntu-common {{timestamp}}",
+      "ami_regions": [
+        "us-east-1",
+        "us-west-1"
+      ],
+      "tags": {
+        "Name": "{{isotime \"2006-01-02\"}}",
+        "OS": "Ubuntu",
+        "Release": "12.04 LTS"
+      }
     },
     {
       "type": "virtualbox-iso",
@@ -60,6 +69,7 @@
 
         "sudo apt-get install software-properties-common",
         "sudo apt-add-repository ppa:ansible/ansible",
+        "sudo apt-get update -y",
         "sudo apt-get -y install ansible"
       ]
     },
