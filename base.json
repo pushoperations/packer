@@ -35,7 +35,7 @@
       "boot_wait":"5s",
       "output_directory": "ubuntu64_basebox_virtualbox",
       "shutdown_command": "echo 'shutdown -P now' > shutdown.sh; echo 'vagrant'|sudo -S sh 'shutdown.sh'",
-      "boot_wait": "4s",
+      "boot_wait": "5s",
       "boot_command": [
         "<esc><esc><enter><wait>",
         "/install/vmlinuz noapic preseed/url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/preseed.cfg <wait>",
@@ -51,26 +51,13 @@
     {
       "type": "shell",
       "execute_command": "echo 'vagrant' | {{ .Vars }} sudo -E -S sh '{{ .Path }}'",
-      "inline": [
-        "sleep 10",
-        "sudo apt-get update -y",
-        "sudo apt-get upgrade -y",
-        "sudo apt-get install -y linux-headers-$(uname -r) build-essential dkms",
-        "sudo apt-get clean",
-        "sudo apt-get dist-upgrade",
-        "mount -o loop VBoxGuestAdditions.iso /media/cdrom",
-        "sh /media/cdrom/VBoxLinuxAdditions.run",
-        "umount /media/cdrom",
-        "mkdir ~/.ssh",
-        "wget -qO- https://raw.github.com/mitchellh/vagrant/master/keys/vagrant.pub >> ~/.ssh/authorized_keys",
-        "echo 'vagrant ALL=NOPASSWD:ALL' > /tmp/vagrant",
-        "chmod 0440 /tmp/vagrant",
-        "mv /tmp/vagrant /etc/sudoers.d/",
-
-        "sudo apt-get install software-properties-common",
-        "sudo apt-add-repository ppa:ansible/ansible",
-        "sudo apt-get update -y",
-        "sudo apt-get -y install ansible"
+      "scripts": [
+        "scripts/upgrade.sh",
+        "scripts/vmtool.sh",
+        "scripts/vagrant.sh",
+        "scripts/minimize.sh",
+        "scripts/cleanup.sh",
+        "scripts/ansible.sh"
       ]
     },
     {
